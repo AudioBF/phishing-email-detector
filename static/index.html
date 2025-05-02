@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing Email Detector</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Phishing Email Detector</h1>
+            <button id="theme-toggle" class="theme-toggle">
+                <i class="fas fa-moon"></i>
+            </button>
+        </header>
+
+        <main>
+            <div class="input-section">
+                <div class="email-examples">
+                    <label for="email-examples">Select an example email:</label>
+                    <select id="email-examples">
+                        <option value="">Choose an example...</option>
+                    </select>
+                </div>
+
+                <div class="email-input">
+                    <label for="email-text">Or enter your own email:</label>
+                    <textarea id="email-text" placeholder="Paste your email here..."></textarea>
+                    <div class="word-count" id="word-count">0 words</div>
+                </div>
+
+                <button id="check-button" class="check-button">
+                    Check Email
+                </button>
+            </div>
+
+            <div class="result-section">
+                <div id="result-box" class="result-box">
+                    <h2>Analysis Result</h2>
+                    <div class="result-content">
+                        <div class="result-item">
+                            <span class="label">Classification:</span>
+                            <span id="classification" class="value">-</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="label">Confidence:</span>
+                            <span id="confidence" class="value">-</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="label">Probability:</span>
+                            <span id="probability" class="value">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div id="notification" class="notification"></div>
+    </div>
+
+    <script src="static/script.js"></script>
+</body>
+</html>
