@@ -4,6 +4,8 @@ import logging
 from transformers import BertTokenizer
 import sys
 import os
+import joblib
+from pathlib import Path
 
 # Adiciona o diretório atual ao PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -87,19 +89,40 @@ class EmailPredictor:
             logger.error(f"Erro na predição: {str(e)}")
             raise
 
-def predict_email(email_text):
-    """Função conveniente para fazer predições"""
+def predict_email(email_text: str) -> dict:
+    """
+    Predict whether an email is spam or not.
+    
+    Args:
+        email_text (str): The email text to analyze
+        
+    Returns:
+        dict: Dictionary containing prediction results
+    """
     try:
-        predictor = EmailPredictor()
-        return predictor.predict(email_text)
-    except Exception as e:
-        logger.error(f"Erro ao fazer predição: {str(e)}")
+        # Load the model
+        model_path = Path(__file__).parent / "models" / "spam_model.joblib"
+        if not model_path.exists():
+            raise FileNotFoundError("Model file not found")
+            
+        model = joblib.load(model_path)
+        
+        # Make prediction
+        prediction = model.predict([email_text])[0]
+        probability = model.predict_proba([email_text])[0][1]
+        
         return {
-            'is_spam': False,
-            'confidence': 0.0,
-            'probability': 0.0,
-            'features': None
+            "is_spam": bool(prediction),
+            "confidence": probability,
+            "probability": probability,
+            "features": {
+                "text_length": len(email_text),
+                "has_links": "http" in email_text.lower(),
+                "has_attachments": "attachment" in email_text.lower()
+            }
         }
+    except Exception as e:
+        raise Exception(f"Error during prediction: {str(e)}")
 
 # Inicializar o predictor global
 try:
