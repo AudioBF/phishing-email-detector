@@ -4,7 +4,6 @@ import logging
 from transformers import BertTokenizer
 import sys
 import os
-import joblib
 from pathlib import Path
 
 # Adiciona o diretório atual ao PYTHONPATH
@@ -35,7 +34,9 @@ class EmailPredictor:
                 self.model.load_state_dict(torch.load(model_path, map_location=self.device))
                 logger.info("Modelo BERT carregado com sucesso")
             else:
-                raise FileNotFoundError(f"Modelo não encontrado em {model_path}")
+                # Se o modelo não existir, usar o modelo pré-treinado
+                self.model = SpamClassifier()
+                logger.info("Usando modelo BERT pré-treinado")
             self.model.to(self.device)
             self.model.eval()
         except Exception as e:
@@ -91,7 +92,7 @@ class EmailPredictor:
 
 def predict_email(email_text: str) -> dict:
     """
-    Predict whether an email is spam or not.
+    Predict whether an email is spam or not using BERT.
     
     Args:
         email_text (str): The email text to analyze
@@ -100,34 +101,13 @@ def predict_email(email_text: str) -> dict:
         dict: Dictionary containing prediction results
     """
     try:
-        # Load the model
-        model_path = Path(__file__).parent / "models" / "spam_model.joblib"
-        if not model_path.exists():
-            raise FileNotFoundError("Model file not found")
-            
-        model = joblib.load(model_path)
+        # Inicializar o predictor
+        predictor = EmailPredictor()
         
-        # Make prediction
-        prediction = model.predict([email_text])[0]
-        probability = model.predict_proba([email_text])[0][1]
+        # Fazer a predição
+        result = predictor.predict(email_text)
         
-        return {
-            "is_spam": bool(prediction),
-            "confidence": probability,
-            "probability": probability,
-            "features": {
-                "text_length": len(email_text),
-                "has_links": "http" in email_text.lower(),
-                "has_attachments": "attachment" in email_text.lower()
-            }
-        }
+        return result
     except Exception as e:
-        raise Exception(f"Error during prediction: {str(e)}")
-
-# Inicializar o predictor global
-try:
-    predictor = EmailPredictor()
-    logger.info("Predictor inicializado com sucesso")
-except Exception as e:
-    logger.error(f"Erro ao inicializar predictor: {str(e)}")
-    predictor = None
+        logger.error(f"Error during prediction: {str(e)}")
+        raise

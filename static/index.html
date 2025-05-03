@@ -6,58 +6,77 @@
     <title>Phishing Email Detector</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="static/style.css">
+    <style>
+        body {
+            background-image: url('/static/assets/ad.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        .overlay {
+            background-color: rgba(0, 0, 0, 0.7);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Phishing Email Detector</h1>
-            <button id="theme-toggle" class="theme-toggle">
-                <i class="fas fa-moon"></i>
-            </button>
-        </header>
-
-        <main>
-            <div class="input-section">
-                <div class="email-examples">
-                    <label for="email-examples">Select an example email:</label>
-                    <select id="email-examples">
-                        <option value="">Choose an example...</option>
-                    </select>
-                </div>
-
-                <div class="email-input">
-                    <label for="email-text">Or enter your own email:</label>
-                    <textarea id="email-text" placeholder="Paste your email here..."></textarea>
-                    <div class="word-count" id="word-count">0 words</div>
-                </div>
-
-                <button id="check-button" class="check-button">
-                    Check Email
+    <div class="overlay">
+        <div class="container">
+            <header>
+                <h1>Phishing Email Detector</h1>
+                <button id="theme-toggle" class="theme-toggle">
+                    <i class="fas fa-moon"></i>
                 </button>
-            </div>
+            </header>
+            
+            <main>
+                <div class="input-section">
+                    <div class="email-examples">
+                        <label for="email-examples">Select an example email:</label>
+                        <select id="email-examples">
+                            <option value="">Choose an example...</option>
+                        </select>
+                    </div>
 
-            <div class="result-section">
-                <div id="result-box" class="result-box">
-                    <h2>Analysis Result</h2>
-                    <div class="result-content">
-                        <div class="result-item">
-                            <span class="label">Classification:</span>
-                            <span id="classification" class="value">-</span>
-                        </div>
-                        <div class="result-item">
-                            <span class="label">Confidence:</span>
-                            <span id="confidence" class="value">-</span>
-                        </div>
-                        <div class="result-item">
-                            <span class="label">Probability:</span>
-                            <span id="probability" class="value">-</span>
+                    <div class="email-input">
+                        <label for="email-text">Or enter your own email:</label>
+                        <textarea id="email-text" placeholder="Paste your email here..."></textarea>
+                        <div class="word-count" id="word-count">0 words</div>
+                    </div>
+
+                    <button id="check-button" class="check-button">
+                        Check Email
+                    </button>
+                </div>
+
+                <div class="result-section">
+                    <div id="result-box" class="result-box">
+                        <h2>Analysis Result</h2>
+                        <div class="result-content">
+                            <div class="result-item">
+                                <span class="label">Classification:</span>
+                                <span id="classification" class="value">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="label">Confidence:</span>
+                                <span id="confidence" class="value">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="label">Probability:</span>
+                                <span id="probability" class="value">-</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </main>
+            </main>
 
-        <div id="notification" class="notification"></div>
+            <div id="notification" class="notification"></div>
+        </div>
     </div>
 
     <script src="static/script.js"></script>

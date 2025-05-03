@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
+from typing import Optional
 import logging
 import os
 import sys
@@ -12,6 +13,10 @@ from app.routers import email_analyzer
 
 # Adiciona o diretório atual ao PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Download NLTK resources
+nltk.download('punkt')
+nltk.download('stopwords')
 
 from app.predict import predict_email
 
@@ -41,7 +46,13 @@ app.include_router(email_analyzer.router)
 
 # Define request models
 class EmailRequest(BaseModel):
-    text: str
+    email_text: str
+
+class EmailResponse(BaseModel):
+    is_spam: bool
+    confidence: float
+    probability: float
+    features: dict
 
 @app.get("/")
 async def read_root():
@@ -65,23 +76,18 @@ async def get_samples():
         logger.error(f"Error loading samples: {str(e)}")
         raise HTTPException(status_code=500, detail="Error loading email samples")
 
-@app.post("/analyze")
+@app.post("/analyze", response_model=EmailResponse)
 async def analyze_email(request: EmailRequest):
     """Route to analyze email content"""
     try:
-        if not request.text.strip():
+        if not request.email_text.strip():
             logger.warning("Empty text received")
             raise HTTPException(status_code=400, detail="Email text cannot be empty")
         
-        result = predict_email(request.text)
+        result = predict_email(request.email_text)
         logger.info(f"Analysis completed: {'Spam' if result['is_spam'] else 'Ham'} (confidence: {result['confidence']})")
         
-        return {
-            "is_spam": result["is_spam"],
-            "confidence": round(result["confidence"] * 100, 2),
-            "probability": round(result["probability"] * 100, 2),
-            "features": result["features"]
-        }
+        return result
     except Exception as e:
         logger.error(f"Error analyzing email: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

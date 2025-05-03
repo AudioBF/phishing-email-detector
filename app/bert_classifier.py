@@ -39,24 +39,38 @@ class EmailDataset(Dataset):
         }
 
 class SpamClassifier(nn.Module):
-    def __init__(self, bert_model_name='prajjwal1/bert-tiny'):
+    def __init__(self, dropout=0.1):
         super(SpamClassifier, self).__init__()
-        self.bert = BertModel.from_pretrained(bert_model_name)
-        self.dropout = nn.Dropout(0.2)
-        self.fc1 = nn.Linear(128, 64)
+        
+        # Carregar o modelo BERT pré-treinado
+        self.bert = BertModel.from_pretrained('prajjwal1/bert-tiny')
+        
+        # Camadas fully connected
+        self.fc1 = nn.Linear(128, 64)  # 128 é o tamanho do embedding do BERT-tiny
         self.fc2 = nn.Linear(64, 32)
         self.fc3 = nn.Linear(32, 1)
+        
+        # Dropout
+        self.dropout = nn.Dropout(dropout)
+        
+        # Função de ativação
         self.sigmoid = nn.Sigmoid()
-
+    
     def forward(self, input_ids, attention_mask):
+        # Obter embeddings do BERT
         outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask)
         pooled_output = outputs.pooler_output
+        
+        # Passar pelas camadas fully connected
         x = self.dropout(pooled_output)
-        x = torch.relu(self.fc1(x))
+        x = self.fc1(x)
         x = self.dropout(x)
-        x = torch.relu(self.fc2(x))
-        x = self.sigmoid(self.fc3(x))
-        return x
+        x = self.fc2(x)
+        x = self.dropout(x)
+        x = self.fc3(x)
+        
+        # Aplicar sigmoid para obter probabilidade
+        return self.sigmoid(x)
 
 def train_model(model, train_loader, val_loader, criterion, optimizer, device, num_epochs=3):
     best_val_loss = float('inf')
