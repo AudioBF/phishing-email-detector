@@ -15,8 +15,25 @@ from app.routers import email_analyzer
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Download NLTK resources
-nltk.download('punkt')
-nltk.download('stopwords')
+try:
+    nltk_data_dir = os.path.join(os.path.expanduser("~"), "nltk_data")
+    if not os.path.exists(nltk_data_dir):
+        os.makedirs(nltk_data_dir)
+    nltk.data.path.append(nltk_data_dir)
+    
+    # Download punkt if not already downloaded
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        nltk.download('punkt', download_dir=nltk_data_dir)
+    
+    # Download stopwords if not already downloaded
+    try:
+        nltk.data.find('corpora/stopwords')
+    except LookupError:
+        nltk.download('stopwords', download_dir=nltk_data_dir)
+except Exception as e:
+    print(f"Warning: Could not download NLTK data: {e}")
 
 from app.predict import predict_email
 
@@ -91,27 +108,6 @@ async def analyze_email(request: EmailRequest):
     except Exception as e:
         logger.error(f"Error analyzing email: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
-# Download required NLTK data
-try:
-    nltk_data_dir = os.path.join(os.path.expanduser("~"), "nltk_data")
-    if not os.path.exists(nltk_data_dir):
-        os.makedirs(nltk_data_dir)
-    nltk.data.path.append(nltk_data_dir)
-    
-    # Download punkt if not already downloaded
-    try:
-        nltk.data.find('tokenizers/punkt')
-    except LookupError:
-        nltk.download('punkt', download_dir=nltk_data_dir)
-    
-    # Download stopwords if not already downloaded
-    try:
-        nltk.data.find('corpora/stopwords')
-    except LookupError:
-        nltk.download('stopwords', download_dir=nltk_data_dir)
-except Exception as e:
-    print(f"Warning: Could not download NLTK data: {e}")
 
 if __name__ == "__main__":
     import uvicorn
