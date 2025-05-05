@@ -40,8 +40,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const wordCount = document.getElementById('word-count');
     
     // Load email examples
-    fetch('/samples')
-        .then(response => response.json())
+    fetch('/static/emails_samples.json')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             console.log('Loaded email samples:', data);
             
@@ -72,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .catch(error => {
             console.error('Error loading email examples:', error);
-            showNotification('Error loading email examples', 'error');
+            showNotification('Error loading email examples: ' + error.message, 'error');
         });
     
     // Word count functionality
