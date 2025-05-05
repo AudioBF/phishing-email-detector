@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const wordCount = document.getElementById('word-count');
     
     // Load email examples
-    fetch('/static/emails_samples.json')
+    fetch('/samples')
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
