@@ -79,8 +79,16 @@ async def get_samples():
         samples_path = os.path.join(static_dir, "emails_samples.json")
         logger.info(f"Loading samples from: {samples_path}")
         
+        if not os.path.exists(samples_path):
+            logger.error(f"File not found: {samples_path}")
+            raise HTTPException(status_code=404, detail="Email samples file not found")
+        
         with open(samples_path, 'r', encoding='utf-8') as f:
             samples = json.load(f)
+        
+        if not isinstance(samples, dict) or 'emails' not in samples:
+            logger.error("Invalid samples file format")
+            raise HTTPException(status_code=500, detail="Invalid samples file format")
         
         # Verificar a estrutura dos dados
         logger.info(f"Number of samples: {len(samples['emails'])}")
@@ -91,9 +99,12 @@ async def get_samples():
             logger.info(f"  Email length: {len(email['email'])}")
         
         return samples
+    except json.JSONDecodeError as e:
+        logger.error(f"Error parsing JSON: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error parsing email samples")
     except Exception as e:
         logger.error(f"Error loading samples: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error loading email samples")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/analyze", response_model=EmailResponse)
 async def analyze_email(request: EmailRequest):
