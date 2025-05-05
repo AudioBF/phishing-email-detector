@@ -210,3 +210,12 @@ data/
 results/
 notebooks/
 *.ipynb
+
+# Local development configuration
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Dependencies
+node_modules/
