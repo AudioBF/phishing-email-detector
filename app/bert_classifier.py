@@ -8,6 +8,7 @@ import numpy as np
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 import os
+import gc
 
 class EmailDataset(Dataset):
     def __init__(self, texts, labels, tokenizer, max_length=128):
@@ -50,27 +51,40 @@ class SpamClassifier(nn.Module):
         self.fc2 = nn.Linear(64, 32)
         self.fc3 = nn.Linear(32, 1)
         
-        # Dropout
+        # Dropout para regularização
         self.dropout = nn.Dropout(dropout)
         
-        # Função de ativação
-        self.sigmoid = nn.Sigmoid()
+        # Forçar limpeza de memória
+        gc.collect()
+        torch.cuda.empty_cache()
     
     def forward(self, input_ids, attention_mask):
         # Obter embeddings do BERT
-        outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask)
-        pooled_output = outputs.pooler_output
+        outputs = self.bert(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            return_dict=True
+        )
+        
+        # Usar apenas o embedding do token [CLS]
+        pooled_output = outputs.last_hidden_state[:, 0, :]
+        
+        # Aplicar dropout
+        pooled_output = self.dropout(pooled_output)
         
         # Passar pelas camadas fully connected
-        x = self.dropout(pooled_output)
-        x = self.fc1(x)
+        x = torch.relu(self.fc1(pooled_output))
         x = self.dropout(x)
-        x = self.fc2(x)
+        x = torch.relu(self.fc2(x))
         x = self.dropout(x)
         x = self.fc3(x)
         
-        # Aplicar sigmoid para obter probabilidade
-        return self.sigmoid(x)
+        # Limpar memória
+        del outputs, pooled_output
+        gc.collect()
+        torch.cuda.empty_cache()
+        
+        return x
 
 def train_model(model, train_loader, val_loader, criterion, optimizer, device, num_epochs=3):
     best_val_loss = float('inf')
