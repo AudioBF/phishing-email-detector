@@ -18,26 +18,18 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Download NLTK resources
+# Configure NLTK data path
+nltk_data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "nltk_data")
+nltk.data.path.append(nltk_data_dir)
+
+# Verify NLTK resources
 try:
-    # Use a directory within the project for NLTK data
-    nltk_data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "nltk_data")
-    nltk.data.path.append(nltk_data_dir)
-    
-    # Verify if punkt is available
-    try:
-        nltk.data.find('tokenizers/punkt')
-    except LookupError:
-        logger.error("Punkt tokenizer not found in nltk_data directory")
-    
-    # Verify if stopwords is available
-    try:
-        nltk.data.find('corpora/stopwords')
-    except LookupError:
-        logger.error("Stopwords not found in nltk_data directory")
-except Exception as e:
-    logger.error(f"Error loading NLTK data: {e}")
-    # Continue execution even if NLTK data loading fails
+    nltk.data.find('tokenizers/punkt')
+    nltk.data.find('corpora/stopwords')
+    logger.info("NLTK resources loaded successfully")
+except LookupError as e:
+    logger.error(f"NLTK resource not found: {e}")
+    raise
 
 from app.predict import predict_email
 
