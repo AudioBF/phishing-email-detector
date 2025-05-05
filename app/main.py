@@ -106,6 +106,22 @@ async def get_samples():
         logger.error(f"Error loading samples: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/static/emails_samples.json")
+async def get_samples_file():
+    """Serve the email samples JSON file directly"""
+    try:
+        samples_path = os.path.join(static_dir, "emails_samples.json")
+        logger.info(f"Serving samples file from: {samples_path}")
+        
+        if not os.path.exists(samples_path):
+            logger.error(f"File not found: {samples_path}")
+            raise HTTPException(status_code=404, detail="Email samples file not found")
+        
+        return FileResponse(samples_path, media_type="application/json")
+    except Exception as e:
+        logger.error(f"Error serving samples file: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/analyze", response_model=EmailResponse)
 async def analyze_email(request: EmailRequest):
     """Route to analyze email content"""
