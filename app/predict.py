@@ -64,26 +64,49 @@ class EmailPredictor:
                 outputs = self.model(input_ids, attention_mask)
                 probability = outputs.item()
             
-            # Usar threshold de 0.5 e confiança baseada na probabilidade
-            is_spam = probability > 0.5
-            confidence = abs(probability - 0.5) * 2  # Normaliza para 0-1
+            # Features específicas de phishing
+            text_lower = email_text.lower()
+            features = {
+                'text_length': len(email_text),
+                'has_links': 'http' in text_lower or 'www' in text_lower,
+                'has_urgency': any(word in text_lower for word in ['urgent', 'immediately', 'now', 'asap', 'hurry', 'limited time']),
+                'has_money': any(word in text_lower for word in ['$', 'money', 'cash', 'prize', 'win', 'million', 'lottery']),
+                'has_suspicious': any(word in text_lower for word in ['verify', 'account', 'password', 'click', 'login', 'security', 'update']),
+                'has_threat': any(word in text_lower for word in ['blocked', 'suspended', 'terminated', 'expired', 'warning']),
+                'has_personal': any(word in text_lower for word in ['dear customer', 'valued customer', 'account holder', 'user']),
+                'has_grammar_errors': sum(1 for c in email_text if c.isupper()) > len(email_text) * 0.3,  # Muitas letras maiúsculas
+                'has_special_chars': sum(1 for c in email_text if not c.isalnum() and not c.isspace()) > len(email_text) * 0.1  # Muitos caracteres especiais
+            }
+            
+            # Calcular score baseado nas features
+            feature_score = sum([
+                0.2 if features['has_links'] else 0,
+                0.2 if features['has_urgency'] else 0,
+                0.2 if features['has_money'] else 0,
+                0.2 if features['has_suspicious'] else 0,
+                0.1 if features['has_threat'] else 0,
+                0.1 if features['has_personal'] else 0
+            ])
+            
+            # Ajustar probabilidade com base no feature_score
+            adjusted_probability = probability * 0.7 + feature_score * 0.3
+            
+            # Usar threshold mais baixo para ser mais sensível a phishing
+            is_spam = adjusted_probability > 0.4  # Threshold mais baixo
+            confidence = abs(adjusted_probability - 0.4) * 2.5  # Ajustado para o novo threshold
             
             # Log para debug
-            logger.info(f"Probabilidade: {probability}")
+            logger.info(f"Probabilidade original: {probability}")
+            logger.info(f"Feature score: {feature_score}")
+            logger.info(f"Probabilidade ajustada: {adjusted_probability}")
             logger.info(f"Classificação: {'Spam' if is_spam else 'Ham'}")
             logger.info(f"Confiança: {confidence}")
             
             return {
                 'is_spam': is_spam,
                 'confidence': confidence,
-                'probability': probability,
-                'features': {
-                    'text_length': len(email_text),
-                    'has_links': 'http' in email_text.lower() or 'www' in email_text.lower(),
-                    'has_urgency': any(word in email_text.lower() for word in ['urgent', 'immediately', 'now', 'asap']),
-                    'has_money': any(word in email_text.lower() for word in ['$', 'money', 'cash', 'prize', 'win']),
-                    'has_suspicious': any(word in email_text.lower() for word in ['verify', 'account', 'password', 'click'])
-                }
+                'probability': adjusted_probability,
+                'features': features
             }
             
         except Exception as e:

@@ -83,27 +83,26 @@ async def get_samples():
             logger.error(f"File not found: {samples_path}")
             raise HTTPException(status_code=404, detail="Email samples file not found")
         
-        with open(samples_path, 'r', encoding='utf-8') as f:
-            samples = json.load(f)
+        try:
+            with open(samples_path, 'r', encoding='utf-8') as f:
+                samples = json.load(f)
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing JSON file: {str(e)}")
+            raise HTTPException(status_code=500, detail="Invalid JSON format in samples file")
         
         if not isinstance(samples, dict) or 'emails' not in samples:
             logger.error("Invalid samples file format")
             raise HTTPException(status_code=500, detail="Invalid samples file format")
         
-        # Verificar a estrutura dos dados
-        logger.info(f"Number of samples: {len(samples['emails'])}")
-        for i, email in enumerate(samples['emails'][:2]):  # Log dos primeiros 2 emails
-            logger.info(f"Sample {i+1}:")
-            logger.info(f"  Title: {email['title']}")
-            logger.info(f"  Type: {email['type']}")
-            logger.info(f"  Email length: {len(email['email'])}")
+        # Verify the structure of each email
+        for i, email in enumerate(samples['emails']):
+            if not all(key in email for key in ['title', 'type', 'email']):
+                logger.error(f"Invalid email format at index {i}")
+                raise HTTPException(status_code=500, detail=f"Invalid email format at index {i}")
         
         return samples
-    except json.JSONDecodeError as e:
-        logger.error(f"Error parsing JSON: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error parsing email samples")
     except Exception as e:
-        logger.error(f"Error loading samples: {str(e)}")
+        logger.error(f"Unexpected error in get_samples: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/static/emails_samples.json")
@@ -137,6 +136,10 @@ async def analyze_email(request: EmailRequest):
     except Exception as e:
         logger.error(f"Error analyzing email: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/favicon.ico")
+async def favicon():
+    return FileResponse(os.path.join(static_dir, "assets", "favicon.ico"))
 
 if __name__ == "__main__":
     import uvicorn
