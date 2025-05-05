@@ -14,32 +14,32 @@ from app.routers import email_analyzer
 # Adiciona o diretório atual ao PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Download NLTK resources
-try:
-    nltk_data_dir = os.path.join(os.path.expanduser("~"), "nltk_data")
-    if not os.path.exists(nltk_data_dir):
-        os.makedirs(nltk_data_dir)
-    nltk.data.path.append(nltk_data_dir)
-    
-    # Download punkt if not already downloaded
-    try:
-        nltk.data.find('tokenizers/punkt')
-    except LookupError:
-        nltk.download('punkt', download_dir=nltk_data_dir)
-    
-    # Download stopwords if not already downloaded
-    try:
-        nltk.data.find('corpora/stopwords')
-    except LookupError:
-        nltk.download('stopwords', download_dir=nltk_data_dir)
-except Exception as e:
-    print(f"Warning: Could not download NLTK data: {e}")
-
-from app.predict import predict_email
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Download NLTK resources
+try:
+    # Use a directory within the project for NLTK data
+    nltk_data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "nltk_data")
+    nltk.data.path.append(nltk_data_dir)
+    
+    # Verify if punkt is available
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        logger.error("Punkt tokenizer not found in nltk_data directory")
+    
+    # Verify if stopwords is available
+    try:
+        nltk.data.find('corpora/stopwords')
+    except LookupError:
+        logger.error("Stopwords not found in nltk_data directory")
+except Exception as e:
+    logger.error(f"Error loading NLTK data: {e}")
+    # Continue execution even if NLTK data loading fails
+
+from app.predict import predict_email
 
 app = FastAPI(title="Phishing Email Detector API")
 
@@ -59,7 +59,7 @@ static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Include routers
-app.include_router(email_analyzer.router)
+app.include_router(email_analyzer.router, prefix="/email", tags=["email"])
 
 # Define request models
 class EmailRequest(BaseModel):
@@ -85,9 +85,19 @@ async def get_samples():
     """Route to get email samples"""
     try:
         samples_path = os.path.join(static_dir, "emails_samples.json")
+        logger.info(f"Loading samples from: {samples_path}")
+        
         with open(samples_path, 'r', encoding='utf-8') as f:
             samples = json.load(f)
-        logger.info(f"Returning {len(samples['emails'])} email samples")
+        
+        # Verificar a estrutura dos dados
+        logger.info(f"Number of samples: {len(samples['emails'])}")
+        for i, email in enumerate(samples['emails'][:2]):  # Log dos primeiros 2 emails
+            logger.info(f"Sample {i+1}:")
+            logger.info(f"  Title: {email['title']}")
+            logger.info(f"  Type: {email['type']}")
+            logger.info(f"  Email length: {len(email['email'])}")
+        
         return samples
     except Exception as e:
         logger.error(f"Error loading samples: {str(e)}")

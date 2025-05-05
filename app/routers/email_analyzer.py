@@ -5,15 +5,15 @@ from app.predict import predict_email
 router = APIRouter()
 
 class EmailRequest(BaseModel):
-    text: str
+    email_text: str
 
 @router.post("/analyze")
 async def analyze_email(request: EmailRequest):
     try:
-        if not request.text.strip():
+        if not request.email_text.strip():
             raise HTTPException(status_code=400, detail="Email text cannot be empty")
         
-        result = predict_email(request.text)
+        result = predict_email(request.email_text)
         return {
             "is_spam": result["is_spam"],
             "confidence": round(result["confidence"] * 100, 2),

@@ -43,22 +43,37 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch('/samples')
         .then(response => response.json())
         .then(data => {
+            console.log('Loaded email samples:', data);
+            
+            // Limpar opções existentes
+            emailExamples.innerHTML = '<option value="">Choose an example...</option>';
+            
+            // Adicionar novas opções
             data.emails.forEach(email => {
                 const option = document.createElement('option');
-                option.value = email.text;
-                option.textContent = email.title;
+                option.dataset.email = email.email;  // Armazenar o email como um atributo de dados
+                option.dataset.type = email.type;    // Armazenar o tipo como um atributo de dados
+                option.value = email.title;  // Usar o título como valor visível
+                option.textContent = `${email.title} (${email.type.toUpperCase()})`;  // Mostrar título e tipo
                 emailExamples.appendChild(option);
             });
+            
+            // Adicionar evento de mudança após carregar as opções
+            emailExamples.addEventListener('change', () => {
+                const selectedOption = emailExamples.options[emailExamples.selectedIndex];
+                const emailContent = selectedOption.dataset.email || '';
+                const emailType = selectedOption.dataset.type || '';
+                console.log('Selected email content:', emailContent);
+                console.log('Selected email type:', emailType);
+                
+                emailText.value = emailContent;
+                updateWordCount();
+            });
         })
-        .catch(error => console.error('Error loading email examples:', error));
-    
-    // Handle email example selection
-    emailExamples.addEventListener('change', () => {
-        if (emailExamples.value) {
-            emailText.value = emailExamples.value;
-            updateWordCount();
-        }
-    });
+        .catch(error => {
+            console.error('Error loading email examples:', error);
+            showNotification('Error loading email examples', 'error');
+        });
     
     // Word count functionality
     emailText.addEventListener('input', updateWordCount);
@@ -72,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Email analysis functionality
     const checkButton = document.getElementById('check-button');
     const resultBox = document.getElementById('result-box');
+    const expectedType = document.getElementById('expected-type');
     const classification = document.getElementById('classification');
     const confidence = document.getElementById('confidence');
     const probability = document.getElementById('probability');
@@ -79,6 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     checkButton.addEventListener('click', async () => {
         const text = emailText.value.trim();
+        const selectedOption = emailExamples.options[emailExamples.selectedIndex];
+        const emailType = selectedOption ? selectedOption.dataset.type : '';
         
         if (!text) {
             showNotification('Please enter an email to analyze', 'error');
@@ -89,7 +107,12 @@ document.addEventListener('DOMContentLoaded', () => {
             checkButton.disabled = true;
             checkButton.textContent = 'Analyzing...';
             
-            const response = await fetch('/analyze', {
+            // Atualizar o tipo esperado
+            expectedType.textContent = emailType ? emailType.toUpperCase() : '-';
+            expectedType.className = `value ${emailType}`;
+            
+            console.log('Sending request with text:', text);
+            const response = await fetch('/email/analyze', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -97,7 +120,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ email_text: text })
             });
             
+            console.log('Response status:', response.status);
             const data = await response.json();
+            console.log('Response data:', data);
             
             // Update result display
             resultBox.style.display = 'block';
@@ -106,8 +131,8 @@ document.addEventListener('DOMContentLoaded', () => {
             classification.textContent = data.is_spam ? 'Spam' : 'Ham';
             classification.className = `value ${data.is_spam ? 'spam' : 'ham'}`;
             
-            confidence.textContent = `${Math.round(data.confidence * 100)}%`;
-            probability.textContent = `${Math.round(data.probability * 100)}%`;
+            confidence.textContent = `${Math.min(Math.round(data.confidence * 100), 99)}%`;
+            probability.textContent = `${Math.min(Math.round(data.probability * 100), 99)}%`;
             
             showNotification('Analysis complete!', 'success');
             

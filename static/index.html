@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phishing Email Detector</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link rel="stylesheet" href="static/style.css">
+    <link rel="stylesheet" href="/static/style.css">
     <style>
         body {
             background-image: url('/static/assets/ad.jpg');
@@ -45,7 +45,7 @@
 
                     <div class="email-input">
                         <label for="email-text">Or enter your own email:</label>
-                        <textarea id="email-text" placeholder="Paste your email here..."></textarea>
+                        <textarea id="email-text" placeholder="Paste your email content here... You can also select an example from the dropdown above."></textarea>
                         <div class="word-count" id="word-count">0 words</div>
                     </div>
 
@@ -58,6 +58,10 @@
                     <div id="result-box" class="result-box">
                         <h2>Analysis Result</h2>
                         <div class="result-content">
+                            <div class="result-item">
+                                <span class="label">Expected Type:</span>
+                                <span id="expected-type" class="value">-</span>
+                            </div>
                             <div class="result-item">
                                 <span class="label">Classification:</span>
                                 <span id="classification" class="value">-</span>
@@ -79,6 +83,6 @@
         </div>
     </div>
 
-    <script src="static/script.js"></script>
+    <script src="/static/script.js"></script>
 </body>
 </html>
